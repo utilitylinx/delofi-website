@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delofi | Corporate Portal</title>
+    <style>
+        :root {
+            --primary: #0054ff;
+            --dark: #111111;
+            --light: #f8f9fa;
+            --gray: #e0e0e0;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; color: var(--dark); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        /* Container Setup */
+        .container { width: 100%; max-width: 1000px; padding: 20px; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); overflow: hidden; }
+        
+        /* Login Screen */
+        #login-screen { max-width: 400px; margin: 0 auto; padding: 40px; text-align: center; }
+        .logo-circle { width: 80px; height: 80px; background: var(--dark); color: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: bold; margin: 0 auto 20px; }
+        h2 { margin-bottom: 25px; color: var(--dark); }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600; color: #555; }
+        .form-control { width: 100%; padding: 12px 15px; border: 2px solid var(--gray); border-radius: 8px; font-size: 16px; transition: border 0.3s; }
+        .form-control:focus { border-color: var(--primary); outline: none; }
+        .btn-main { width: 100%; background: var(--dark); color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+        .btn-main:hover { background: var(--primary); }
+        
+        /* Dashboard Screen */
+        #dashboard-screen { display: none; }
+        .header { background: var(--dark); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .logout-btn { background: transparent; color: #fff; border: 1px solid #fff; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+        .logout-btn:hover { background: #fff; color: var(--dark); }
+        
+        .dashboard-content { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .panel-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--gray); }
+        
+        /* Booking Form */
+        .booking-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .booking-row .form-group { flex: 1; margin-bottom: 0; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-weight: bold; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        /* Active Rides Panel */
+        .ride-list { max-height: 400px; overflow-y: auto; }
+        .empty-state { text-align: center; color: #888; padding: 40px 20px; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(17,17,17,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .hidden-view { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- LOGIN SCREEN -->
+        <div id="login-screen" class="card">
+            <div class="logo-circle">Z</div>
+            <h2>Corporate Portal</h2>
+            <div id="login-alert" class="alert alert-danger"></div>
+            <div class="form-group">
+                <label>Corporate ID (Username)</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter corporate username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password">
+            </div>
+            <button class="btn-main" onclick="handleLogin()" id="login-btn">Secure Login</button>
+            <div style="text-align: right; margin-top: 12px;">
+                <button onclick="openForgotPasswordModal()" style="background:none; border:none; color:var(--primary); font-size:13px; font-weight:bold; cursor:pointer;">Forgot Password?</button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD SCREEN -->
+        <div id="dashboard-screen" class="card">
+            <div class="header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="background: #fff; color: var(--dark); padding: 5px 12px; border-radius: 4px; font-weight: bold;">Delofi B2B</div>
+                    <span id="company-name-display">Company Dashboard (Tenant ID: <span id="tenant-id-tag" style="color: #ffc107; font-weight: bold;">--</span>)</span>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+            
+            <div class="dashboard-content">
+                <!-- Book a Ride Panel -->
+                <div>
+                    <h3 class="panel-title">Dispatch a Ride</h3>
+                    <div id="booking-alert" class="alert"></div>
+                    
+                    <div class="booking-row">
+                        <div class="form-group">
+                            <label>Passenger Name</label>
+                            <input type="text" id="p_name" class="form-control" placeholder="Client or Guest Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Passenger Phone</label>
+                            <input type="text" id="p_phone" class="form-control" placeholder="Mobile Number">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Pickup Location</label>
+                        <input type="text" id="p_pickup" class="form-control" placeholder="Enter full pickup address or postcode">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Dropoff Location</label>
+                        <input type="text" id="p_dropoff" class="form-control" placeholder="Enter full dropoff address or postcode">
+                    </div>
+
+                    <div class="booking-row">
+                        <div class="form-group">
+                            <label>Schedule For (Optional)</label>
+                            <input type="datetime-local" id="p_time" class="form-control">
+                        </div>
+                    </div>
+
+                    <button class="btn-main" onclick="submitCorporateRide()" id="dispatch-btn">Request Vehicle</button>
+                </div>
+                
+                <!-- Active Rides Panel -->
+                <div style="background: var(--light); padding: 20px; border-radius: 12px; border: 1px solid var(--gray);">
+                    <h3 class="panel-title" style="border-bottom-color: #ccc;">Today's Dispatches</h3>
+                    <div class="ride-list" id="active-rides-list">
+                        <div class="empty-state">
+                            <p>No active rides today.</p>
+                            <p style="font-size: 13px; margin-top: 5px;">Rides requested by your company will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- FORGOT PASSWORD REQUEST MODAL -->
+    <div id="forgot-password-modal" class="modal-overlay hidden-view">
+        <div class="card" style="width: 100%; max-width: 380px; padding: 30px;">
+            <h3 style="margin-bottom: 8px;">Reset Password</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 20px; line-height: 1.4;">Enter your corporate username and registered email. If they match our records, we will email you a secure reset link.</p>
+            <div class="form-group">
+                <label>Corporate ID (Username)</label>
+                <input type="text" id="forgot-username" class="form-control" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Registered Email</label>
+                <input type="email" id="forgot-email" class="form-control" placeholder="Enter registered email">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button onclick="closeForgotPasswordModal()" style="padding: 12px 15px; border: 1px solid var(--gray); background: #fff; color: #555; border-radius: 8px; cursor: pointer; font-weight: bold;">Cancel</button>
+                <button onclick="submitForgotPassword()" style="padding: 12px 15px; border: none; background: var(--primary); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold;">Send Reset Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXECUTE RESET MODAL -->
+    <div id="execute-reset-modal" class="modal-overlay hidden-view">
+        <div class="card" style="width: 100%; max-width: 380px; padding: 35px 30px; text-align: center;">
+            <div style="width: 60px; height: 60px; background: #e8f5e9; color: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 15px;">🔒</div>
+            <h3 style="margin-bottom: 8px;">Create New Password</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 25px;">Enter a secure new password for your account below.</p>
+            <input type="hidden" id="reset-token-input">
+            <div class="form-group" style="text-align: left;">
+                <label>New Password</label>
+                <input type="password" id="reset-new-password" class="form-control" placeholder="••••••••">
+            </div>
+            <button onclick="submitNewPassword()" class="btn-main" style="margin-top: 15px;">Confirm Password</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://admin.delofi.co.uk';
+        let currentCompanyId = null;
+
+        window.onload = () => {
+            // Check for password reset token first
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                document.getElementById('reset-token-input').value = token;
+                document.getElementById('execute-reset-modal').classList.remove('hidden-view');
+            }
+
+            const storedId = localStorage.getItem('delofi_corporate_id');
+            // Auto-login only if they are not actively trying to reset a password
+            if (storedId && !token) {
+                currentCompanyId = storedId;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard-screen').style.display = 'block';
+                document.getElementById('tenant-id-tag').textContent = currentCompanyId;
+                fetchActiveRides();
+                setInterval(fetchActiveRides, 10000); // Auto-refresh list every 10s
+            }
+        };
+
+        // --- PASSWORD RESET LOGIC ---
+        function openForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.remove('hidden-view');
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.add('hidden-view');
+        }
+
+        async function submitForgotPassword() {
+            const user = document.getElementById('forgot-username').value.trim();
+            const email = document.getElementById('forgot-email').value.trim();
+            
+            if (!user || !email) return alert("Please enter both your corporate username and registered email.");
+            
+            try {
+                const res = await fetch(`${API_BASE}/admin/request-password-reset`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, email: email })
+                });
+                const data = await res.json();
+                alert(data.message || "Request processed.");
+                closeForgotPasswordModal();
+            } catch (e) {
+                alert("Server connection error.");
+            }
+        }
+
+        async function submitNewPassword() {
+            const token = document.getElementById('reset-token-input').value;
+            const newPass = document.getElementById('reset-new-password').value.trim();
+            if (!newPass) return alert("Please enter a new password.");
+            
+            try {
+                const res = await fetch(`${API_BASE}/admin/execute-password-reset`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token, new_password: newPass })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("✅ " + data.message);
+                    // Clear the URL to remove the token and show the standard login screen
+                    window.location.href = window.location.pathname;
+                } else {
+                    alert("❌ " + data.error);
+                }
+            } catch (e) {
+                alert("Server connection error.");
+            }
+        }
+        // -----------------------------
+
+        async function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+            const alertBox = document.getElementById('login-alert');
+            
+            if(!user || !pass) return showAlert(alertBox, 'Please enter both credentials.', 'danger');
+            
+            btn.innerHTML = 'Authenticating...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentCompanyId = data.company_id;
+                    localStorage.setItem('delofi_corporate_id', currentCompanyId);
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard-screen').style.display = 'block';
+                    document.getElementById('tenant-id-tag').textContent = currentCompanyId;
+                    fetchActiveRides();
+                    setInterval(fetchActiveRides, 10000);
+                } else {
+                    showAlert(alertBox, data.error || 'Invalid credentials', 'danger');
+                }
+            } catch (error) {
+                showAlert(alertBox, 'Could not connect to server.', 'danger');
+            }
+            btn.innerHTML = 'Secure Login';
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('delofi_corporate_id');
+            currentCompanyId = null;
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function submitCorporateRide() {
+            const alertBox = document.getElementById('booking-alert');
+            const btn = document.getElementById('dispatch-btn');
+            
+            const name = document.getElementById('p_name').value;
+            const phone = document.getElementById('p_phone').value;
+            const pickup = document.getElementById('p_pickup').value;
+            const dropoff = document.getElementById('p_dropoff').value;
+            const timeRaw = document.getElementById('p_time').value;
+            
+            if(!name || !phone || !pickup || !dropoff) {
+                return showAlert(alertBox, 'Please fill in all passenger and location details.', 'danger');
+            }
+            
+            btn.innerHTML = 'Calculating & Dispatching...';
+            btn.disabled = true;
+            
+            try {
+                // 1. Calculate the Fare using the Company's pricing tier
+                const fareRes = await fetch(`${API_BASE}/calculate-fare`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pickup, dropoff, company_id: currentCompanyId })
+                });
+                const fareData = await fareRes.json();
+                
+                if (fareData.error) {
+                    btn.innerHTML = 'Request Vehicle'; btn.disabled = false;
+                    return showAlert(alertBox, 'Could not calculate route. Please check addresses.', 'danger');
+                }
+                
+                // 2. Build the exact payload the Driver App expects
+                const payload = {
+                    rider_id: null,
+                    company_id: currentCompanyId,
+                    rider_name: name + " (Corporate)",
+                    rider_phone: phone,
+                    rider_rating: 5.0,
+                    pickup: pickup,
+                    dropoff: dropoff,
+                    pickup_coords: fareData.pickup_coords,
+                    dropoff_coords: fareData.dropoff_coords,
+                    distance_miles: fareData.distance_miles,
+                    eta_mins: fareData.eta_mins,
+                    fare: fareData.estimated_fare,
+                    payout: fareData.driver_payout,
+                    is_priority: false
+                };
+                
+                if (timeRaw) {
+                    const dt = new Date(timeRaw);
+                    payload.reservation_time = dt.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+                    payload.reservation_target = dt.toISOString().replace('T', ' ').substring(0, 16);
+                }
+                
+                // 3. Dispatch to the active fleet
+                const dispatchRes = await fetch(`${API_BASE}/request-ride`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const dispatchData = await dispatchRes.json();
+                
+                if (dispatchData.status === 'success') {
+                    showAlert(alertBox, 'Vehicle successfully dispatched to network!', 'success');
+                    document.getElementById('p_name').value = '';
+                    document.getElementById('p_phone').value = '';
+                    document.getElementById('p_pickup').value = '';
+                    document.getElementById('p_dropoff').value = '';
+                    document.getElementById('p_time').value = '';
+                    fetchActiveRides();
+                } else {
+                    showAlert(alertBox, 'Dispatch failed: ' + dispatchData.error, 'danger');
+                }
+            } catch (error) {
+                showAlert(alertBox, 'Server connection error.', 'danger');
+            }
+            
+            btn.innerHTML = 'Request Vehicle';
+            btn.disabled = false;
+        }
+
+        async function fetchActiveRides() {
+            if(!currentCompanyId) return;
+            try {
+                const response = await fetch(`${API_BASE}/corporate/active-rides`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_id: currentCompanyId })
+                });
+                const data = await response.json();
+                const container = document.getElementById('active-rides-list');
+                
+                if (data.status === 'success' && data.rides.length > 0) {
+                    container.innerHTML = data.rides.map(r => `
+                        <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${r.status === 'completed' ? '#28a745' : '#0054ff'};">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <strong style="font-size: 15px;">${r.passenger}</strong>
+                                <span style="font-size: 14px; font-weight: bold; color: var(--dark);">£${r.fare}</span>
+                            </div>
+                            <div style="font-size: 13px; color: #555; margin-bottom: 5px;">📍 ${r.pickup}</div>
+                            <div style="font-size: 13px; color: #555; margin-bottom: 5px;">🏁 ${r.dropoff}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <span style="font-size: 12px; background: #eee; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold;">${r.status}</span>
+                                <span style="font-size: 12px; color: #888;">🚗 ${r.driver}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="empty-state"><p>No active rides today.</p></div>';
+                }
+            } catch (e) {}
+        }
+
+        function showAlert(element, message, type) {
+            element.textContent = message;
+            element.className = `alert alert-${type}`;
+            element.style.display = 'block';
+            setTimeout(() => { element.style.display = 'none'; }, 4000);
+        }
+    </script>
+</body>
+</html>
