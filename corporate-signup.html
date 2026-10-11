@@ -16,7 +16,6 @@
         .form-control:focus { border-color: var(--primary); outline: none; }
         .btn-main { width: 100%; background: var(--dark); color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-main:hover { background: var(--primary); }
-        .alert { display: none; padding: 15px; border-radius: 8px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; margin-bottom: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -25,38 +24,35 @@
         <h2 style="margin-bottom: 10px;">Corporate Account Request</h2>
         <p style="color: #666; font-size: 14px; margin-bottom: 25px;">Apply for a B2B account to dispatch rides for your guests and employees.</p>
         
-        <div id="success-alert" class="alert">Application submitted! Our team will contact you shortly.</div>
-
-        <div id="signup-form">
+        <form action="https://api.web3forms.com/submit" method="POST" id="signup-form">
+            <!-- Replace with your actual Web3Forms Access Key -->
+            <input type="hidden" name="access_key" value="f60f52cd-2f19-4f69-b669-708c65c06bdf">
+            
             <div class="form-group">
                 <label>Company Name</label>
-                <input type="text" class="form-control" placeholder="e.g. Utilitylinx Ltd">
+                <input type="text" name="Company Name" class="form-control" placeholder="e.g. Utilitylinx Ltd" required>
             </div>
             <div class="form-group">
                 <label>Contact Person</label>
-                <input type="text" class="form-control" placeholder="Full Name">
+                <input type="text" name="Contact Person" class="form-control" placeholder="Full Name" required>
             </div>
             <div class="form-group">
                 <label>Business Email</label>
-                <input type="email" class="form-control" placeholder="you@company.co.uk">
+                <input type="email" name="Email" class="form-control" placeholder="you@company.co.uk" required>
             </div>
             <div class="form-group">
                 <label>Phone Number</label>
-                <input type="text" class="form-control" placeholder="Best number to reach you">
+                <input type="text" name="Phone" class="form-control" placeholder="Best number to reach you" required>
             </div>
-            <button class="btn-main" onclick="submitForm()">Submit Application</button>
-        </div>
+            <!-- Redirects back to login after successful submission -->
+            <input type="hidden" name="redirect" value="https://www.delofi.co.uk/corporate">
+            
+            <button type="submit" class="btn-main">Submit Application</button>
+        </form>
+
         <div style="margin-top: 20px;">
             <a href="/corporate" style="color: var(--primary); text-decoration: none; font-size: 14px; font-weight: bold;">← Back to Login</a>
         </div>
     </div>
-
-    <script>
-        function submitForm() {
-            // We can easily connect this to Web3Forms later so it emails you directly!
-            document.getElementById('signup-form').style.display = 'none';
-            document.getElementById('success-alert').style.display = 'block';
-        }
-    </script>
 </body>
 </html>
