@@ -403,7 +403,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                                 <div>
                                     <span style="font-size: 12px; background: #eee; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-right: 8px;">${r.status}</span>
-                                    <span style="font-size: 12px; color: #888;">🚗 ${r.driver}</span>
+                                    <span style="font-size: 12px; color: #888;">🚗 ${r.status.toLowerCase().includes('cancel') ? 'None' : r.driver}</span>
                                 </div>
                                 ${cancelBtn}
                             </div>
