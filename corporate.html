@@ -74,9 +74,8 @@
                 <input type="password" id="password" class="form-control" placeholder="Enter password">
             </div>
             <button class="btn-main" onclick="handleLogin()" id="login-btn">Secure Login</button>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
-                <a href="/corporate-signup" style="color:var(--primary); font-size:13px; font-weight:bold; text-decoration:none;">New? Register now</a>
-                <button type="button" onclick="openForgotPasswordModal()" style="background:none; border:none; color:var(--primary); font-size:13px; font-weight:bold; cursor:pointer;">Forgot Password?</button>
+            <div style="text-align: right; margin-top: 12px;">
+                <button onclick="openForgotPasswordModal()" style="background:none; border:none; color:var(--primary); font-size:13px; font-weight:bold; cursor:pointer;">Forgot Password?</button>
             </div>
         </div>
 
@@ -389,7 +388,11 @@
                 const container = document.getElementById('active-rides-list');
                 
                 if (data.status === 'success' && data.rides.length > 0) {
-                    container.innerHTML = data.rides.map(r => `
+                    container.innerHTML = data.rides.map(r => {
+                        let cancelBtn = ['pending', 'broadcast', 'scheduled'].includes(r.status.toLowerCase()) 
+                            ? `<button onclick="cancelCorporateRide(${r.id})" style="background: var(--danger); color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s;">Cancel</button>` 
+                            : '';
+                        return `
                         <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${r.status === 'completed' ? '#28a745' : '#0054ff'};">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                                 <strong style="font-size: 15px;">${r.passenger}</strong>
@@ -398,15 +401,40 @@
                             <div style="font-size: 13px; color: #555; margin-bottom: 5px;">📍 ${r.pickup}</div>
                             <div style="font-size: 13px; color: #555; margin-bottom: 5px;">🏁 ${r.dropoff}</div>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                                <span style="font-size: 12px; background: #eee; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold;">${r.status}</span>
-                                <span style="font-size: 12px; color: #888;">🚗 ${r.driver}</span>
+                                <div>
+                                    <span style="font-size: 12px; background: #eee; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-right: 8px;">${r.status}</span>
+                                    <span style="font-size: 12px; color: #888;">🚗 ${r.driver}</span>
+                                </div>
+                                ${cancelBtn}
                             </div>
                         </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 } else {
                     container.innerHTML = '<div class="empty-state"><p>No active rides today.</p></div>';
                 }
             } catch (e) {}
+        }
+
+        async function cancelCorporateRide(rideId) {
+            if (!confirm("Are you sure you want to cancel this ride request?")) return;
+            const alertBox = document.getElementById('booking-alert');
+            try {
+                const response = await fetch(`${API_BASE}/cancel-ride`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ride_id: rideId })
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showAlert(alertBox, 'Ride successfully cancelled.', 'success');
+                    fetchActiveRides();
+                } else {
+                    showAlert(alertBox, 'Failed to cancel ride.', 'danger');
+                }
+            } catch (error) {
+                showAlert(alertBox, 'Server connection error.', 'danger');
+            }
         }
 
         function showAlert(element, message, type) {
